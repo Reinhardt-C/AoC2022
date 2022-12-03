@@ -12,7 +12,13 @@ import Data.Ord
 import Data.Char
 
 main :: IO ()
-main = day2b
+main = day3b
+
+-- Day 3
+day3a :: IO ()
+day3a = readFile "day3input.txt" >>= print . sum . map ((\x -> if x>=97 then x-96 else x-38) . ord . head . nub . uncurry intersect . (\xs -> splitAt (length xs `div` 2) xs)) . lines
+day3b :: IO ()
+day3b = readFile "day3input.txt" >>= print . sum . map ((\x -> if x>=97 then x-96 else x-38) . ord . head . nub . foldr1 intersect) . chunksOf 3 . lines
 
 -- Day 2
 day2a :: IO ()
