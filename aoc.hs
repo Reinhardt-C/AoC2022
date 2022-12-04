@@ -12,7 +12,13 @@ import Data.Ord
 import Data.Char
 
 main :: IO ()
-main = day3b
+main = day4b
+
+-- Day 4
+day4a :: IO ()
+day4a = readFile "day4input.txt" >>= print . length . filter (\[[a,b],[c,d]] -> (a<=c&&b>=d) || (a>=c&&b<=d)) . map (map (map (read :: String -> Int). splitOn "-") . splitOn ",") . lines
+day4b :: IO ()
+day4b = readFile "day4input.txt" >>= print . length . filter (\[[a,b],[c,d]] -> (a<=d&&b>=c) || (a>=d&&b<=c)) . map (map (map (read :: String -> Int). splitOn "-") . splitOn ",") . lines
 
 -- Day 3
 day3a :: IO ()
