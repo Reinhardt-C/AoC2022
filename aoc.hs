@@ -12,13 +12,39 @@ import Data.Ord
 import Data.Char
 
 main :: IO ()
-main = day4b
+main = day5b
+
+-- Day 5
+day5a :: IO ()
+day5a = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . getDual . foldMap (Dual . Endo . runInstr) $ parseInstr b) $ parsePiles a) . splitWhen null . lines
+    where
+        parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
+        parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
+        runInstr [n,a,b] piles
+            | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
+            | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
+            where
+                newA = drop (n+1) (piles !! a)
+                newB = reverse (take (n+1) (piles !! a)) ++ (piles !! b)
+        runInstr _ _ = []
+day5b :: IO ()
+day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . getDual . foldMap (Dual . Endo . runInstr) $ parseInstr b) $ parsePiles a) . splitWhen null . lines
+    where
+        parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
+        parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
+        runInstr [n,a,b] piles
+            | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
+            | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
+            where
+                newA = drop (n+1) (piles !! a)
+                newB = take (n+1) (piles !! a) ++ (piles !! b)
+        runInstr _ _ = []
 
 -- Day 4
 day4a :: IO ()
-day4a = readFile "day4input.txt" >>= print . length . filter (\[[a,b],[c,d]] -> (a<=c&&b>=d) || (a>=c&&b<=d)) . map (map (map (read :: String -> Int). splitOn "-") . splitOn ",") . lines
+day4a = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=c&&b>=d || a>=c&&b<=d) . map (map (read :: String -> Int) . splitOneOf ",-") . lines
 day4b :: IO ()
-day4b = readFile "day4input.txt" >>= print . length . filter (\[[a,b],[c,d]] -> (a<=d&&b>=c) || (a>=d&&b<=c)) . map (map (map (read :: String -> Int). splitOn "-") . splitOn ",") . lines
+day4b = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=d&&b>=c || a>=d&&b<=c) . map (map (read :: String -> Int) . splitOneOf ",-") . lines
 
 -- Day 3
 day3a :: IO ()
