@@ -30,7 +30,7 @@ initState = State [] (Map.fromList [("/", emptyDir)])
 emptyDir :: FSDir
 emptyDir = Dir [] 0
 
-lineToFunc :: [Char] -> FSState -> FSState
+lineToFunc :: [Char] -> (FSState -> FSState)
 lineToFunc l
     | "$ cd " `isPrefixOf` l    = cd (drop 5 l)
     | "dir " `isPrefixOf` l     = dir (drop 4 l)
