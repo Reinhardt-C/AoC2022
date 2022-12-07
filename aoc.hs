@@ -10,13 +10,42 @@ import Data.Function
 import Data.Coerce
 import Data.Ord
 import Data.Char
+import Data.Map as Map (Map, fromList, empty, insert, adjustWithKey, mapWithKey, toList)
+import qualified Data.Map as Map (filter)
 
 main :: IO ()
-main = day7a
+main = day7b
 
 -- Day 7
 day7a :: IO ()
-day7a = readFile "day7input.txt" >>= print
+day7a = readFile "day7input.txt" >>= print . sum . filter (<=100000) . map (\(_, Dir _ s) -> s)
+                                     . toList . getStructure . (\f -> f initState) . appEndo . getDual . foldMap (Dual . Endo . lineToFunc) . lines
+day7b :: IO ()
+day7b = readFile "day7input.txt" >>= print . snd . minimumBy (compare `on` snd) . (\ps@(p:_) -> filter (\(_, s) -> s>=snd p - 40000000) ps) . map (\(d, Dir _ s) -> (head $ splitOn "/" d, s))
+                                     . toList . getStructure . (\f -> f initState) . appEndo . getDual . foldMap (Dual . Endo . lineToFunc) . lines
+
+initState :: FSState
+initState = State [] (Map.fromList [("/", emptyDir)])
+
+emptyDir :: FSDir
+emptyDir = Dir [] 0
+
+lineToFunc :: [Char] -> FSState -> FSState
+lineToFunc l
+    | "$ cd " `isPrefixOf` l    = cd (drop 5 l)
+    | "dir " `isPrefixOf` l     = dir (drop 4 l)
+    | "$ ls" == l               = id
+    | otherwise                 = \(State p m) -> State p $ (appEndo . foldMap (Endo . adjustWithKey (\_ (Dir ds s) -> Dir ds (s + read ((head . words) l))) . intercalate "/")) ((init . tails) p) m
+
+cd :: [Char] -> FSState -> FSState
+cd ".." (State p m) = State (tail p) m
+cd d (State p m) = State (d:p) m
+
+dir :: String -> FSState -> FSState
+dir d (State p m) = State p (adjustWithKey (\_ (Dir ds s) -> Dir (d:ds) s) (intercalate "/" p) $ Map.insert (intercalate "/" (d:p)) emptyDir m)
+
+data FSDir = Dir {getChildDirs :: [String], getSize :: Int} deriving (Show)
+data FSState = State {getPath :: [String], getStructure :: Map String FSDir} deriving (Show)
 
 -- Day 6
 day6a :: IO ()
@@ -35,7 +64,7 @@ day5a = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . ge
             | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
             where
                 newA = drop (n+1) (piles !! a)
-                newB = reverse (take (n+1) (piles !! a)) ++ (piles !! b)
+                newB = reverse (take (n+1) (piles !! a)) ++ piles !! b
         runInstr _ _ = []
 day5b :: IO ()
 day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . getDual . foldMap (Dual . Endo . runInstr) $ parseInstr b) $ parsePiles a) . splitWhen null . lines
@@ -47,7 +76,7 @@ day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . ge
             | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
             where
                 newA = drop (n+1) (piles !! a)
-                newB = take (n+1) (piles !! a) ++ (piles !! b)
+                newB = take (n+1) (piles !! a) ++ piles !! b
         runInstr _ _ = []
 
 -- Day 4
