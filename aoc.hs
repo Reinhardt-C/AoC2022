@@ -12,13 +12,17 @@ import Data.Ord
 import Data.Char
 
 main :: IO ()
-main = day6b
+main = day7a
+
+-- Day 7
+day7a :: IO ()
+day7a = readFile "day7input.txt" >>= print
 
 -- Day 6
 day6a :: IO ()
-day6a = readFile "day6input.txt" >>= print . maybe (-1) (+4) . findIndex (\s -> s==nub s) . (\ds -> map (map (ds!!) . (\x -> [x..x+3])) [0..length ds-4])
+day6a = readFile "day6input.txt" >>= print . maybe (-1) (+4) . findIndex (\s -> s==nub s) . map (take 4) . tails
 day6b :: IO ()
-day6b = readFile "day6input.txt" >>= print . maybe (-1) (+14) . findIndex (\s -> s==nub s) . (\ds -> map (map (ds!!) . (\x -> [x..x+13])) [0..length ds-14])
+day6b = readFile "day6input.txt" >>= print . maybe (-1) (+14) . findIndex (\s -> s==nub s) . map (take 14) . tails
 
 -- Day 5
 day5a :: IO ()
