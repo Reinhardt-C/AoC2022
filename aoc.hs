@@ -35,6 +35,7 @@ direction :: [Char] -> [Int]
 direction x
     | x `member` directions = fromMaybe [0, 0] (Map.lookup x directions)
     | otherwise             = [0, 0]
+
 move :: [Int] -> ([Int], [Int], [[Int]]) -> ([Int], [Int], [[Int]])
 move [dx, dy] ([tx, ty], [hx, hy], hs) = (nt, [hx + dx, hy + dy], hs ++ [nt])
     where nt = if max (abs $ hx + dx - tx) (abs $ hy + dy - ty) <= 1 then [tx, ty] else [tx + clamp 1 (hx + dx - tx), ty + clamp 1 (hy + dy - ty)]
@@ -107,8 +108,10 @@ day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . ge
 
 parsePiles :: [[Char]] -> [[Char]]
 parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
+
 parseInstr :: [String] -> [[Int]]
 parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
+
 runInstr :: [Int] -> [[a]] -> [[a]]
 runInstr [n,a,b] piles
     | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
