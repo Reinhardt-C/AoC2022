@@ -11,15 +11,42 @@ import Data.Function
 import Data.Coerce
 import Data.Ord
 import Data.Char
-import Data.Map as Map (Map, fromList, empty, insert, adjustWithKey, mapWithKey, toList)
-import qualified Data.Map as Map (filter)
+import Data.Map as Map (Map, empty, insert, adjustWithKey, mapWithKey, toList, member)
+import qualified Data.Map as Map (fromList, filter, lookup)
+import Data.Maybe
+import GHC.Float
+import Data.Set (size)
+import qualified Data.Set as Set (fromList)
 
 main :: IO ()
-main = day9a
+main = day9b
 
 -- Day 9
 day9a :: IO ()
-day9a = readFile "day9input.txt" >>= print
+day9a = readFile "day9input.txt" >>= print . size . Set.fromList . (\(_,_,h)->h) . (\f -> f ([0, 0], [0, 0], [])) . appEndo . getDual . foldMap (Dual . Endo . move . direction)
+                                     . foldr1 (++) . map ((\[a, b] -> replicate (read b) a) . words) . lines
+day9b :: IO ()
+day9b = readFile "day9input.txt" >>= print . size . Set.fromList . snd . (\f -> f (replicate 10 [0, 0], [])) . appEndo . getDual . foldMap (Dual . Endo . moveStep . direction)
+                                     . foldr1 (++) . map ((\[a, b] -> replicate (read b) a) . words) . lines
+
+directions :: Map [Char] [Int]
+directions = Map.fromList [("R", [1, 0]), ("L", [-1, 0]), ("U", [0, 1]), ("D", [0, -1])]
+direction :: [Char] -> [Int]
+direction x
+    | x `member` directions = fromMaybe [0, 0] (Map.lookup x directions)
+    | otherwise             = [0, 0]
+move :: [Int] -> ([Int], [Int], [[Int]]) -> ([Int], [Int], [[Int]])
+move [dx, dy] ([tx, ty], [hx, hy], hs) = (nt, [hx + dx, hy + dy], hs ++ [nt])
+    where nt = if max (abs $ hx + dx - tx) (abs $ hy + dy - ty) <= 1 then [tx, ty] else [tx + clamp 1 (hx + dx - tx), ty + clamp 1 (hy + dy - ty)]
+move _ _ = ([], [], [])
+
+moveIndex :: Int -> ([[Int]], [[Int]]) -> ([[Int]], [[Int]])
+moveIndex i (ks, hs) = (take (i+1) ks ++ [x] ++ drop (i+2) ks, z)
+    where (x, y, z) = move [0, 0] (ks!!(i+1), ks!!i, hs)
+
+moveStep :: [Int] -> ([[Int]], [[Int]]) -> ([[Int]], [[Int]])
+moveStep [dx, dy] ([hx, hy]:ks, hs) = (appEndo . getDual . foldMap (Dual . Endo . (. (\(a,b) -> (a,hs))) . moveIndex) $ [0..length ks - 1]) ([hx+dx, hy+dy]:ks, hs)
+moveStep _ _ = ([], [])
 
 -- Day 8
 day8a :: IO ()
@@ -28,7 +55,6 @@ day8a = readFile "day8input.txt" >>= print . length . filter id . foldr1 (++) . 
                                      . (\arr -> (map (tail.inits) arr, map (tail.inits) . transpose $ arr, map (init.tails) arr, map (init.tails) . transpose $ arr))
                                      . map (map $ read @Int . (:[])) . lines
     where checkLine f = (map . map) (\x -> maximum ((-1):delete (f x) x) < f x)
-
 day8b :: IO ()
 day8b = readFile "day8input.txt" >>= print . maximum . map maximum .  foldr1 (zipWith $ zipWith (*))
                                      . (\(a, b, c, d) -> [checkLine reverse a, transpose $ checkLine reverse b, checkLine id c, transpose $ checkLine id d])
@@ -76,28 +102,21 @@ day6b = readFile "day6input.txt" >>= print . maybe (-1) (+14) . findIndex (\s ->
 -- Day 5
 day5a :: IO ()
 day5a = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . getDual . foldMap (Dual . Endo . runInstr) $ parseInstr b) $ parsePiles a) . splitWhen null . lines
-    where
-        parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
-        parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
-        runInstr [n,a,b] piles
-            | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
-            | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
-            where
-                newA = drop (n+1) (piles !! a)
-                newB = reverse (take (n+1) (piles !! a)) ++ piles !! b
-        runInstr _ _ = []
 day5b :: IO ()
 day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . getDual . foldMap (Dual . Endo . runInstr) $ parseInstr b) $ parsePiles a) . splitWhen null . lines
+
+parsePiles :: [[Char]] -> [[Char]]
+parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
+parseInstr :: [String] -> [[Int]]
+parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
+runInstr :: [Int] -> [[a]] -> [[a]]
+runInstr [n,a,b] piles
+    | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
+    | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
     where
-        parsePiles = map (filter (/=' ') . map (!!1)) . transpose . init . map (chunksOf 4)
-        parseInstr = map (map (flip (-) 1 . read) . last . transpose . chunksOf 2 . words)
-        runInstr [n,a,b] piles
-            | a<=b  = take a piles ++ [newA] ++ (drop (a+1) . take b) piles ++ [newB] ++ drop (b+1) piles
-            | b<a   = take b piles ++ [newB] ++ (drop (b+1) . take a) piles ++ [newA] ++ drop (a+1) piles
-            where
-                newA = drop (n+1) (piles !! a)
-                newB = take (n+1) (piles !! a) ++ piles !! b
-        runInstr _ _ = []
+        newA = drop (n+1) (piles !! a)
+        newB = take (n+1) (piles !! a) ++ piles !! b
+runInstr _ _ = []
 
 -- Day 4
 day4a :: IO ()
