@@ -1,4 +1,5 @@
--- {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import System.IO
@@ -14,7 +15,26 @@ import Data.Map as Map (Map, fromList, empty, insert, adjustWithKey, mapWithKey,
 import qualified Data.Map as Map (filter)
 
 main :: IO ()
-main = day7b
+main = day9a
+
+-- Day 9
+day9a :: IO ()
+day9a = readFile "day9input.txt" >>= print
+
+-- Day 8
+day8a :: IO ()
+day8a = readFile "day8input.txt" >>= print . length . filter id . foldr1 (++) . foldr1 (zipWith $ zipWith (||))
+                                     . (\(a, b, c, d) -> [checkLine last a, transpose $ checkLine last b, checkLine head c, transpose $ checkLine head d])
+                                     . (\arr -> (map (tail.inits) arr, map (tail.inits) . transpose $ arr, map (init.tails) arr, map (init.tails) . transpose $ arr))
+                                     . map (map $ read @Int . (:[])) . lines
+    where checkLine f = (map . map) (\x -> maximum ((-1):delete (f x) x) < f x)
+
+day8b :: IO ()
+day8b = readFile "day8input.txt" >>= print . maximum . map maximum .  foldr1 (zipWith $ zipWith (*))
+                                     . (\(a, b, c, d) -> [checkLine reverse a, transpose $ checkLine reverse b, checkLine id c, transpose $ checkLine id d])
+                                     . (\arr -> (map (tail.inits) arr, map (tail.inits) . transpose $ arr, map (init.tails) arr, map (init.tails) . transpose $ arr))
+                                     . map (map $ read @Int . (:[])) . lines
+    where checkLine f = (map . map) ((\(x:xs) -> if all (<x) xs then length xs else (+1) . length $ takeWhile (<x) xs) . f)
 
 -- Day 7
 day7a :: IO ()
@@ -81,9 +101,9 @@ day5b = readFile "day5input.txt" >>= print . map head . (\[a,b] -> (appEndo . ge
 
 -- Day 4
 day4a :: IO ()
-day4a = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=c&&b>=d || a>=c&&b<=d) . map (map (read :: String -> Int) . splitOneOf ",-") . lines
+day4a = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=c&&b>=d || a>=c&&b<=d) . map (map (read @Int) . splitOneOf ",-") . lines
 day4b :: IO ()
-day4b = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=d&&b>=c || a>=d&&b<=c) . map (map (read :: String -> Int) . splitOneOf ",-") . lines
+day4b = readFile "day4input.txt" >>= print . length . filter (\[a,b,c,d] -> a<=d&&b>=c || a>=d&&b<=c) . map (map (read @Int) . splitOneOf ",-") . lines
 
 -- Day 3
 day3a :: IO ()
