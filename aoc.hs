@@ -37,8 +37,8 @@ direction x
     | otherwise             = [0, 0]
 
 move :: [Int] -> ([Int], [Int], [[Int]]) -> ([Int], [Int], [[Int]])
-move [dx, dy] ([tx, ty], [hx, hy], hs) = (nt, [hx + dx, hy + dy], hs ++ [nt])
-    where nt = if max (abs $ hx + dx - tx) (abs $ hy + dy - ty) <= 1 then [tx, ty] else [tx + clamp 1 (hx + dx - tx), ty + clamp 1 (hy + dy - ty)]
+move [dx, dy] ([tx, ty], [hx, hy], hs) = (nt, [hx+dx, hy+dy], hs ++ [nt])
+    where nt = if max (abs $ hx+dx-tx) (abs $ hy+dy-ty) <= 1 then [tx, ty] else [tx + clamp 1 (hx+dx-tx), ty + clamp 1 (hy+dy-ty)]
 move _ _ = ([], [], [])
 
 moveIndex :: Int -> ([[Int]], [[Int]]) -> ([[Int]], [[Int]])
