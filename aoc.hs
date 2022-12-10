@@ -19,7 +19,23 @@ import Data.Set (size)
 import qualified Data.Set as Set (fromList)
 
 main :: IO ()
-main = day9b
+main = day10a
+
+-- Day 10
+day10a :: IO ()
+day10a = readFile "day10input.txt" >>= print . sum . (\(_, _, h) -> [h !! (19+40*x) | x <- [0..5]]) . (\f -> f (1, 0, [])) . appEndo . getDual . foldMap (Dual . Endo . runOp) . lines
+
+runOp :: String -> ((Int, Int, [Int]) -> (Int, Int, [Int]))
+runOp "noop" = runNoop
+runOp s
+    | "addx" `isPrefixOf` s = runAddx (read . drop 5 $ s)
+    | otherwise             = id
+
+runNoop :: (Int, Int, [Int]) -> (Int, Int, [Int])
+runNoop (x, y, h) = (x, y+1, (x*y):h)
+
+runAddx :: Int -> (Int, Int, [Int]) -> (Int, Int, [Int])
+runAddx z (x, y, h) = (x+z, y+2, (x*(y+1)):(x*y):h)
 
 -- Day 9
 day9a :: IO ()
